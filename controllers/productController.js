@@ -43,6 +43,7 @@ exports.generateProject = async (req, res) => {
 	}
 };
 
+
 exports.listProjects = async (req, res) => {
 	try {
 		const underdogApiEndpoint = 'https://devnet.underdogprotocol.com';
@@ -103,7 +104,7 @@ exports.generateNft = async (req, res) => {
 		};
 		(async () => {
 			const NFT = await axios.post(
-				`${underdogApiEndpoint}/v2/projects/${req.body.project}/nfts`,
+				`${underdogApiEndpoint}/v2/projects/${req.body.project_id}/nfts`,
 				nftData,
 				config
 			);
