@@ -33,9 +33,6 @@ const userSchema = new mongoose.Schema(
 		project: {
 			type: Array,
 		},
-		nft: {
-			type: Array,
-		},
 		passwordChangedAt: Date,
 		passwordResetToken: String,
 		passwordResetExpires: Date,

@@ -24,25 +24,21 @@ exports.generateProject = async (req, res) => {
 			description: req.body.description,
 			image: uri,
 		};
-		(async () => {
-			const Project = await axios
-				.post(`${underdogApiEndpoint}/v2/projects`, projectData, config)
-				.catch((error) => {
-					console.log(error);
-				});
-			console.log(Project.data);
-			const user = await User.findByIdAndUpdate(
-				req.user._id,
-				{ $addToSet: { project: Project.data.projectId } },
-				{ new: true }
-			);
-			res.status(200).json(Project.data);
-		})();
+		const Project = await axios
+			.post(`${underdogApiEndpoint}/v2/projects`, projectData, config)
+			.catch((error) => {
+				return res.status(400).json({ error: 'Issue generating project, try again!' });
+			});
+		const user = await User.findByIdAndUpdate(
+			req.user._id,
+			{ $addToSet: { project: Project.data.projectId } },
+			{ new: true }
+		);
+		res.status(200).json(Project.data);
 	} catch (err) {
 		res.status(400).json({ Error: 'Not successful, try again!', err });
 	}
 };
-
 
 exports.listProjects = async (req, res) => {
 	try {
@@ -51,9 +47,14 @@ exports.listProjects = async (req, res) => {
 			headers: { Authorization: `Bearer ${process.env.UNDERDOG_TOKEN}` },
 		};
 		const ids = req.user.project;
+		if (!ids || ids.length == 0) return res.status(404).json({ Error: 'No projects recorded' });
 		let projects = [];
 		for (const el of ids) {
-			const Project = await axios.get(`${underdogApiEndpoint}/v2/projects/${el}`, config);
+			const Project = await axios
+				.get(`${underdogApiEndpoint}/v2/projects/${el}`, config)
+				.catch((err) => {
+					return res.status(404).json({ error: 'Project not found' });
+				});
 			projects.push(Project.data);
 		}
 		res.status(200).json(projects);
@@ -62,7 +63,7 @@ exports.listProjects = async (req, res) => {
 	}
 };
 
-exports.retrieveNft = async (req, res) => {
+exports.retrieveNfts = async (req, res) => {
 	try {
 		const { project_id, limit, page } = req.body;
 		const underdogApiEndpoint = 'https://devnet.underdogprotocol.com';
@@ -71,10 +72,14 @@ exports.retrieveNft = async (req, res) => {
 			headers: { Authorization: `Bearer ${process.env.UNDERDOG_TOKEN}` },
 		};
 
-		const NFT = await axios.get(
-			`${underdogApiEndpoint}/v2/projects/${project_id}?page=${page}&limit=${limit}`,
-			config
-		);
+		const NFT = await axios
+			.get(
+				`${underdogApiEndpoint}/v2/projects/${project_id}?page=${page}&limit=${limit}`,
+				config
+			)
+			.catch((err) => {
+				return res.status(404).json({ Error: 'NFT not found' });
+			});
 		res.status(200).json(NFT.data);
 	} catch (err) {
 		res.status(400).json({ Error: 'Try again, Unsuccesful request' });
@@ -102,34 +107,49 @@ exports.generateNft = async (req, res) => {
 			image: uri,
 			receiverAddress: req.user.publicKey,
 		};
-		(async () => {
-			const NFT = await axios.post(
-				`${underdogApiEndpoint}/v2/projects/${req.body.project_id}/nfts`,
-				nftData,
-				config
-			);
-			res.status(200).json(NFT.data);
-		})();
+		const NFT = await axios
+			.post(`${underdogApiEndpoint}/v2/projects/${req.body.project_id}/nfts`, nftData, config)
+			.catch((err) => {
+				return res.status(400).json({ Error: 'Issue Creating NFT, Try again!' });
+			});
+
+		res.status(200).json(NFT.data);
 	} catch (err) {
 		res.status(400).json({ Error: 'Not successful, try again!' });
 	}
 };
 
-// exports.retrieveNft = async (req, res) => {
-//     try{
-//     const {project, limit, page} = req.body
-//     const underdogApiEndpoint = "https://devnet.underdogprotocol.com";
+exports.listAllProjects = async (req, res) => {
+	try {
+		const underdogApiEndpoint = 'https://devnet.underdogprotocol.com';
+		const config = {
+			headers: { Authorization: `Bearer ${process.env.UNDERDOG_TOKEN}` },
+		};
+		const projects = await axios
+			.get(`${underdogApiEndpoint}/v2/projects/`, config)
+			.catch((err) => {
+				return res.status(404).json({ Error: 'Project not found' });
+			});
+		res.status(200).json(projects);
+	} catch {
+		res.status(400).json({ Error: 'Bad request, try again' });
+	}
+};
 
-//     const config = {
-//         headers: { Authorization: `Bearer ${process.env.UNDERDOG_TOKEN}` }
-//     };
-
-//  const NFT = await axios.get(
-//     `${underdogApiEndpoint}/v2/projects/${project}/nfts?page=${page}&limit=${limit}`, config)
-// // console.log(NFT)
-// res.status(200).json(NFT.data)
-//     }catch(err){
-// res.status(400).json({Error: "Not successful, try again!"})
-//     }
-
-// }
+exports.getNft = async (req, res) => {
+	try {
+		const { project_id, nft_id } = req.body;
+		const underdogApiEndpoint = 'https://devnet.underdogprotocol.com';
+		const config = {
+			headers: { Authorization: `Bearer ${process.env.UNDERDOG_TOKEN}` },
+		};
+		const NFT = await axios
+			.get(`${underdogApiEndpoint}/v2/projects/${project_id}/nfts/${nft_id}`, config)
+			.catch((err) => {
+				return res.status(404).json({ Error: 'NFT not found' });
+			});
+		res.status(200).json(NFT.data);
+	} catch (err) {
+		res.status(400).json({ error: 'Unsuccesful request, try again' });
+	}
+};
