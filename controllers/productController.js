@@ -42,6 +42,7 @@ exports.generateProject = async (req, res) => {
 
 exports.listProjects = async (req, res) => {
 	try {
+		console.log(req.user);
 		const underdogApiEndpoint = 'https://devnet.underdogprotocol.com';
 		const config = {
 			headers: { Authorization: `Bearer ${process.env.UNDERDOG_TOKEN}` },
