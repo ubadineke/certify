@@ -47,7 +47,8 @@ exports.listProjects = async (req, res) => {
 			headers: { Authorization: `Bearer ${process.env.UNDERDOG_TOKEN}` },
 		};
 		const ids = req.user.project;
-		if (!ids || ids.length == 0) return res.status(404).json({ Error: 'No projects recorded' });
+		if (!ids || ids.length === 0)
+			return res.status(404).json({ Error: 'No projects recorded' });
 		let projects = [];
 		for (const el of ids) {
 			const Project = await axios
@@ -126,11 +127,14 @@ exports.listAllProjects = async (req, res) => {
 			headers: { Authorization: `Bearer ${process.env.UNDERDOG_TOKEN}` },
 		};
 		const projects = await axios
-			.get(`${underdogApiEndpoint}/v2/projects/`, config)
+			.get(
+				`${underdogApiEndpoint}/v2/projects?page=${req.body.page}&limit=${req.body.limit}`,
+				config
+			)
 			.catch((err) => {
 				return res.status(404).json({ Error: 'Project not found' });
 			});
-		res.status(200).json(projects);
+		res.status(200).json(projects.data);
 	} catch {
 		res.status(400).json({ Error: 'Bad request, try again' });
 	}
