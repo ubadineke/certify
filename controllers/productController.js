@@ -2,6 +2,8 @@ const cloudinary = require('cloudinary').v2;
 const cloud = require('../config/cloudinaryConfig'); //import config
 const axios = require('axios');
 const User = require('../models/userModel');
+const Qr = require('../models/qrModel');
+const qr = require('qrcode');
 
 exports.generateProject = async (req, res) => {
 	try {
@@ -114,8 +116,13 @@ exports.generateNft = async (req, res) => {
 			.catch((err) => {
 				return res.status(400).json({ Error: 'Issue Creating NFT, Try again!' });
 			});
-
-		res.status(200).json(NFT.data);
+		const qrCodeDataUri = await qr.toDataURL(JSON.stringify(NFT.data));
+		await Qr.create({
+			link: qrCodeDataUri,
+			nft_id: NFT.data.nftId,
+			project_id: NFT.data.projectId,
+		});
+		res.status(200).json({ qrCode: qrCodeDataUri, details: NFT.data });
 	} catch (err) {
 		res.status(400).json({ Error: 'Not successful, try again!' });
 	}
@@ -153,7 +160,9 @@ exports.getNft = async (req, res) => {
 			.catch((err) => {
 				return res.status(404).json({ Error: 'NFT not found' });
 			});
-		res.status(200).json(NFT.data);
+		const [qrCode] = await Qr.find({ project_id, nft_id }).select('link');
+		// res.status(200).json(qrCode);
+		res.status(200).json({ nft: NFT.data, qr: qrCode });
 	} catch (err) {
 		res.status(400).json({ error: 'Unsuccesful request, try again' });
 	}
