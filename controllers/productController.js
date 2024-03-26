@@ -201,10 +201,10 @@ exports.generateMultipleNfts = async (req, res) => {
       const config = {
          headers: { Authorization: `Bearer ${process.env.UNDERDOG_TOKEN}` },
       };
-      let isError = false; // Flag variable to track error
+      // let isError = false; // Flag variable to track error
 
-      jsonArr.forEach(async (obj) => {
-         if (isError == true) return;
+      const nftCreatePromises = jsonArr.map(async (obj) => {
+         // if (isError == true) return;
          const nftData = {
             name: req.body.name,
             description: obj.SN,
@@ -212,26 +212,25 @@ exports.generateMultipleNfts = async (req, res) => {
             receiverAddress: req.user.publicKey,
          };
          // console.log(nftData);
-         const NFT = await axios
-            .post(`${underdogApiEndpoint}/v2/projects/${project_id}/nfts`, nftData, config)
-            .catch((err) => {
-               isError = true;
-               return res.status(400).json({
-                  Error: 'Issue Creating NFT, Try again!',
-               });
-            });
+         const NFT = await axios.post(
+            `${underdogApiEndpoint}/v2/projects/${project_id}/nfts`,
+            nftData,
+            config
+         );
          const qrCodeDataUri = await qr.toDataURL(JSON.stringify(NFT.data));
          await Qr.create({
             link: qrCodeDataUri,
             nft_id: NFT.data.nftId,
             project_id: NFT.data.projectId,
          });
+         return NFT;
       });
+      const createdNFTs = await Promise.all(nftCreatePromises);
 
-      if (isError == false) {
-         res.status(200).json({ message: `${jsonArr.length} NFTs successfully created` });
-      }
+      res.status(200).json({
+         message: `${createdNFTs.length} NFTs successfully created`,
+      });
    } catch (err) {
-      res.status(400).json({ error: 'Issues generating NFT, Try again' });
+      return res.status(400).json({ error: err.message || 'Issues generating NFT, Try again' });
    }
 };
