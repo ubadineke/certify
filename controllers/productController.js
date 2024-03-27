@@ -234,3 +234,21 @@ exports.generateMultipleNfts = async (req, res) => {
       return res.status(400).json({ error: err.message || 'Issues generating NFT, Try again' });
    }
 };
+
+exports.getByScan = async (req, res) => {
+   try {
+      const { project_id, nft_id } = req.body;
+      const underdogApiEndpoint = 'https://devnet.underdogprotocol.com';
+      const config = {
+         headers: { Authorization: `Bearer ${process.env.UNDERDOG_TOKEN}` },
+      };
+      const NFT = await axios
+         .get(`${underdogApiEndpoint}/v2/projects/${project_id}/nfts/${nft_id}`, config)
+         .catch((err) => {
+            return res.status(404).json({ Error: 'NFT not found' });
+         });
+      res.status(200).json({ nft: NFT.data });
+   } catch (err) {
+      res.status(400).json({ error: 'Unsuccesful request, try again' });
+   }
+};

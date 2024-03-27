@@ -8,6 +8,7 @@ const {
    getUserProjects,
    getAllProjects,
    getNft,
+   getByScan,
 } = require('../controllers/productController.js');
 const upload = require('../config/multerConfig.js');
 const router = express.Router();
@@ -20,6 +21,7 @@ router
    .post(protect, upload.single('image'), generateProject)
    .get(protect, getUserProjects);
 router.route('/nft').post(protect, upload.single('image'), createSingleNft);
+router.route('/scan').get(getByScan);
 router
    .route('/nfts')
    .post(
